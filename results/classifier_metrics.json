@@ -1,0 +1,18 @@
+{
+  "n_train": 337,
+  "n_test": 113,
+  "accuracy": 0.5752212389380531,
+  "precision": 0.8309859154929577,
+  "recall": 0.6210526315789474,
+  "f1": 0.7108433734939759,
+  "roc_auc": 0.4444444444444444,
+  "baseline_majority_class_accuracy": 0.8407079646017699,
+  "feature_coefficients": {
+    "hallucination_rate_early": -0.28477702434497343,
+    "any_halluc_early": 0.04775200661011285,
+    "last_label_early": 0.029645654619214482,
+    "run_length_at_k": -0.27205865484939046,
+    "mean_sentence_length_early": 0.23374159728205424,
+    "lexical_diversity_early": 0.008790182501674655
+  }
+}

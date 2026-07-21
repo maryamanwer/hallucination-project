@@ -1,0 +1,7 @@
+{
+  "verdict": "FAIL TO REJECT independence null: little evidence of systematic temporal autocorrelation in this corpus.",
+  "n_valid_sequences": 390,
+  "pct_significant_ljungbox_at_alpha": 0.14102564102564102,
+  "alpha": 0.05,
+  "mean_durbin_watson": 1.5776057545032303
+}

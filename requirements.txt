@@ -1,0 +1,16 @@
+numpy
+pandas
+scipy
+statsmodels
+scikit-learn
+matplotlib
+
+# Uncomment for real LLM inference on GPU (generate_hf.py):
+# torch
+# transformers
+# accelerate
+# bitsandbytes    # for 4-bit quantised 70B-class models
+
+# Uncomment for the real AlignScore annotator (annotate.py -> AlignScoreScorer):
+# alignscore
+# spacy

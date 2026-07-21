@@ -1,0 +1,11 @@
+{
+  "n_total": 450,
+  "n_intervened": 286,
+  "n_not_intervened": 164,
+  "mean_halluc_rate_baseline_all": 0.1578888888888889,
+  "mean_halluc_rate_after_intervention_all": 0.1318888888888889,
+  "mean_halluc_rate_baseline_among_intervened": 0.15611888111888114,
+  "mean_halluc_rate_after_among_intervened": 0.11520979020979022,
+  "pct_any_halluc_baseline_among_intervened": 0.8811188811188811,
+  "pct_any_halluc_after_among_intervened": 0.8286713286713286
+}
