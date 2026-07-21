@@ -38,3 +38,34 @@ FAITHFUL_LABEL = 0
 
 RESULTS_DIR = "results"
 DATA_DIR = "data"
+API_PROVIDERS = {
+    "groq": {
+        "base_url": "https://api.groq.com/openai/v1/chat/completions",
+        "env_key": "GROQ_API_KEY",
+        "models": {
+            "llama3-8b": "llama3-8b-8192",
+            "llama3-70b": "llama3-70b-8192",
+            "mistral-7b": "mixtral-8x7b-32768",
+        },
+    },
+    "together": {
+        "base_url": "https://api.together.xyz/v1/chat/completions",
+        "env_key": "TOGETHER_API_KEY",
+        "models": {
+            "llama3-8b": "meta-llama/Meta-Llama-3-8B-Instruct-Turbo",
+            "llama3-70b": "meta-llama/Meta-Llama-3-70B-Instruct-Turbo",
+            "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3",
+            "falcon-7b": "tiiuae/falcon-7b-instruct",
+        },
+    },
+    "openrouter": {
+        "base_url": "https://openrouter.ai/api/v1/chat/completions",
+        "env_key": "OPENROUTER_API_KEY",
+        "models": {
+            "llama3-8b": "meta-llama/llama-3-8b-instruct",
+            "llama3-70b": "meta-llama/llama-3-70b-instruct",
+            "mistral-7b": "mistralai/mistral-7b-instruct",
+            "falcon-7b": "tiiuae/falcon-7b-instruct",
+        },
+    },
+}
