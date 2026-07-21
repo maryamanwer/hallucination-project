@@ -1,4 +1,3 @@
-%%writefile /content/hallucination_project/src/generate_api.py
 import argparse
 import json
 import os
