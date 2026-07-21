@@ -38,14 +38,27 @@ FAITHFUL_LABEL = 0
 
 RESULTS_DIR = "results"
 DATA_DIR = "data"
+
+# ---------------------------------------------------------------------------
+# Hosted OpenAI-compatible API providers (src/generate_api.py) - use these
+# instead of MODEL_REGISTRY when you don't have/want local GPU access.
+#
+# NOTE: hosted providers retire/rename model IDs often. If a --model
+# argument 404s or 400s, check the provider's current model list and
+# update the mapping below - everything in generate_api.py is
+# provider-agnostic and needs no other changes.
+#   Groq's live list:       https://console.groq.com/docs/models
+#   Together's live list:   https://docs.together.ai/docs/serverless-models
+#   OpenRouter's live list:  https://openrouter.ai/models
+# ---------------------------------------------------------------------------
 API_PROVIDERS = {
     "groq": {
         "base_url": "https://api.groq.com/openai/v1/chat/completions",
         "env_key": "GROQ_API_KEY",
         "models": {
-            "llama3-8b": "llama3-8b-8192",
-            "llama3-70b": "llama3-70b-8192",
-            "mistral-7b": "mixtral-8x7b-32768",
+            "llama3-8b": "llama-3.1-8b-instant",
+            "llama3-70b": "llama-3.3-70b-versatile",
+            "mistral-7b": "openai/gpt-oss-20b",
         },
     },
     "together": {
