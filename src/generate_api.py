@@ -11,31 +11,18 @@ from src.config import API_PROVIDERS
 from src.dataset import load_dataset
 
 
-def call_api(provider, model_key, prompt, temperature, max_tokens=400, max_retries=3):
+def call_api(provider, model_key, prompt, temperature, max_tokens=400, max_retries=6):
     cfg = API_PROVIDERS[provider]
     api_key = os.environ.get(cfg["env_key"])
     if not api_key:
-        raise RuntimeError(
-            f"Set the {cfg['env_key']} environment variable with your "
-            f"{provider} API key before running this script."
-        )
+        raise RuntimeError(f"Set the {cfg[\'env_key\']} environment variable with your {provider} API key.")
     if model_key not in cfg["models"]:
-        raise KeyError(
-            f"'{model_key}' has no mapping for provider '{provider}' in "
-            f"src/config.py API_PROVIDERS - add one."
-        )
+        raise KeyError(f"\'{model_key}\' has no mapping for provider \'{provider}\' in src/config.py API_PROVIDERS.")
     model_name = cfg["models"][model_key]
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model_name,
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    payload = {"model": model_name, "messages": [{"role": "user", "content": prompt}],
+               "temperature": temperature, "max_tokens": max_tokens}
     if provider == "openrouter":
         headers["HTTP-Referer"] = "https://example.com"
         headers["X-Title"] = "hallucination-autocorrelation-project"
@@ -45,9 +32,10 @@ def call_api(provider, model_key, prompt, temperature, max_tokens=400, max_retri
         try:
             resp = requests.post(cfg["base_url"], headers=headers, json=payload, timeout=60)
             if resp.status_code == 429:
-                wait = 2 ** attempt
-                print(f"  rate limited, retrying in {wait}s...")
+                wait = min(30, 2 ** attempt)
+                print(f"  rate limited, retrying in {wait}s (attempt {attempt + 1}/{max_retries})...")
                 time.sleep(wait)
+                last_err = f"429 rate limited (last attempt {attempt + 1})"
                 continue
             resp.raise_for_status()
             data = resp.json()
@@ -70,22 +58,33 @@ def main():
     dataset = load_dataset()
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
 
+    n_ok, n_failed = 0, 0
     with open(args.out, "a", encoding="utf-8") as f:
         for item in dataset:
             for sample_idx in range(args.n_samples):
-                text = call_api(args.provider, args.model, item["prompt"], args.temperature)
+                try:
+                    text = call_api(args.provider, args.model, item["prompt"], args.temperature)
+                except RuntimeError as e:
+                    print(f"  SKIPPING {item[\'id\']} sample {sample_idx}: {e}")
+                    n_failed += 1
+                    time.sleep(3)
+                    continue
                 record = {
-                    "item_id": item["id"],
-                    "task_type": item["task_type"],
-                    "model": args.model,
-                    "temperature": args.temperature,
-                    "sample_idx": sample_idx,
-                    "prompt": item["prompt"],
+                    "item_id": item["id"], "task_type": item["task_type"],
+                    "model": args.model, "temperature": args.temperature,
+                    "sample_idx": sample_idx, "prompt": item["prompt"],
                     "generated_text": text,
                 }
                 f.write(json.dumps(record) + "\n")
+                f.flush()
+                n_ok += 1
                 print(f"[{args.provider}/{args.model} T={args.temperature}] "
-                      f"{item['id']} sample {sample_idx} done ({len(text)} chars)")
+                      f"{item[\'id\']} sample {sample_idx} done ({len(text)} chars)")
+                time.sleep(1.2)
+
+    print(f"\nDone: {n_ok} succeeded, {n_failed} skipped after retries.")
+    if n_failed > 0:
+        print("Re-run the same command to top up skipped items.")
 
 
 if __name__ == "__main__":

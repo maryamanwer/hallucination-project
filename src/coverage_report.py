@@ -1,10 +1,3 @@
-%%writefile /content/hallucination_project/src/coverage_report.py
-"""
-Coverage report - proves (with numbers, not just code) that all four task
-categories in the project proposal were actually generated, annotated, and
-analysed, not just theoretically supported by the framework.
-"""
-
 import argparse
 import pandas as pd
 
@@ -51,6 +44,8 @@ def main():
     records = load_jsonl(args.in_path)
     dataset_items = load_dataset()
     report = build_coverage_report(records, dataset_items)
+    import os
+    os.makedirs(os.path.dirname(args.out_path) or ".", exist_ok=True)
     report.to_csv(args.out_path + ".csv", index=False)
     report.to_json(args.out_path + ".json", orient="records", indent=2)
     print(report.to_string(index=False))
