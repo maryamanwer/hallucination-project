@@ -7,21 +7,21 @@ Turns raw generated text into a binary label sequence:
 
 Two scorers are provided:
 
-1. `LexicalOverlapScorer` (default, fully offline, no model download) -
+1. `LexicalOverlapScorer` (fallback, fully offline, no model download) -
    a TF-IDF cosine-similarity proxy against the item's atomic ground-truth
-   facts. This is intentionally simple so the whole pipeline (Phases 2-4)
-   is runnable without any GPU or internet access, and gives you a
-   baseline to sanity-check the statistical pipeline before installing
-   the heavier scorer below.
+   facts. Useful for a quick sanity-check of the statistical pipeline
+   without any GPU or internet access, but NOT the scorer used for
+   reported dissertation results.
 
-2. `AlignScoreScorer` - the real scorer to use for the dissertation.
-   AlignScore / FActScore both require downloading a checkpoint from the
-   HuggingFace Hub, so this class is written but only importable/runnable
-   on a machine with internet + GPU (e.g. your HPC session). Install with:
+2. `AlignScoreScorer` - the real scorer used for the dissertation.
+   Requires a downloaded checkpoint from the HuggingFace Hub:
        pip install alignscore
        python -m spacy download en_core_web_sm
-   and then point `AlignScoreScorer(ckpt_path=...)` at a downloaded
-   checkpoint (see https://github.com/yuh-zha/AlignScore for weights).
+       curl -L -o ckpts/AlignScore-large.ckpt https://huggingface.co/yzha/AlignScore/resolve/main/AlignScore-large.ckpt
+   This is now the default when the script is run standalone (see
+   __main__ below) - it silently falls back to LexicalOverlapScorer only
+   if AlignScore/its checkpoint isn't available, and prints which one
+   ran so it's always clear which scorer produced a given results file.
 
 Swap the scorer used in `annotate_generation` / `annotate_corpus` by
 changing the `scorer` argument - nothing else in the pipeline needs to
@@ -80,7 +80,8 @@ class AlignScoreScorer:
 
     Requires: pip install alignscore; and a downloaded checkpoint.
     Not runnable in a no-GPU / no-internet sandbox - included so the
-    swap is a one-line change once you're on the HPC cluster.
+    swap is a one-line change once you're on the HPC cluster or a Colab
+    GPU runtime.
     """
 
     def __init__(self, ckpt_path: str, device: str = "cuda:0",
@@ -152,10 +153,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--in_path", default="data/raw_generations.jsonl")
     parser.add_argument("--out_path", default="data/annotated_corpus.jsonl")
+    parser.add_argument("--ckpt_path", default="ckpts/AlignScore-large.ckpt",
+                         help="Path to AlignScore checkpoint. If missing or "
+                              "unloadable, falls back to LexicalOverlapScorer.")
     args = parser.parse_args()
 
     facts_by_id = {item["id"]: item["facts"] for item in load_dataset()}
     raw = load_jsonl(args.in_path)
-    annotated = annotate_corpus(raw, facts_by_id)
+
+    try:
+        scorer = AlignScoreScorer(ckpt_path=args.ckpt_path, device="cuda:0")
+        print(f"Using AlignScoreScorer (ckpt: {args.ckpt_path})")
+    except Exception as e:
+        print(f"Falling back to LexicalOverlapScorer (AlignScore unavailable: {e})")
+        scorer = LexicalOverlapScorer()
+
+    annotated = annotate_corpus(raw, facts_by_id, scorer=scorer)
     save_jsonl(annotated, args.out_path)
     print(f"Annotated {len(annotated)} generations -> {args.out_path}")
