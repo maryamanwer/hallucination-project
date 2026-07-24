@@ -1,6 +1,5 @@
 """
 Global configuration for the hallucination-autocorrelation project.
-
 Edit MODEL_REGISTRY and TASK_TYPES to match what you actually run on the
 HPC cluster (Apocrita) or Colab. Nothing else in the codebase needs to
 change if you keep the same field names.
@@ -58,7 +57,13 @@ API_PROVIDERS = {
         "models": {
             "llama3-8b": "llama-3.1-8b-instant",
             "llama3-70b": "llama-3.3-70b-versatile",
-            "mistral-7b": "openai/gpt-oss-20b",
+            # Groq no longer hosts any real Mistral/Mixtral model (they
+            # deprecated mixtral-8x7b-32768 in March 2025 and never replaced
+            # it with another Mistral-family model). Do NOT map "mistral-7b"
+            # to a non-Mistral model here just to fill the slot - it would
+            # silently mislabel your second model family in your results.
+            # Use provider="openrouter", model="mistral-7b" instead, which
+            # maps to a real Mistral checkpoint below.
         },
     },
     "together": {
