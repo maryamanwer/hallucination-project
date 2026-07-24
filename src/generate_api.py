@@ -3,7 +3,6 @@ import json
 import os
 import sys
 import time
-
 import requests
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,9 +14,9 @@ def call_api(provider, model_key, prompt, temperature, max_tokens=400, max_retri
     cfg = API_PROVIDERS[provider]
     api_key = os.environ.get(cfg["env_key"])
     if not api_key:
-        raise RuntimeError(f"Set the {cfg[\'env_key\']} environment variable with your {provider} API key.")
+        raise RuntimeError(f"Set the {cfg['env_key']} environment variable with your {provider} API key.")
     if model_key not in cfg["models"]:
-        raise KeyError(f"\'{model_key}\' has no mapping for provider \'{provider}\' in src/config.py API_PROVIDERS.")
+        raise KeyError(f"'{model_key}' has no mapping for provider '{provider}' in src/config.py API_PROVIDERS.")
     model_name = cfg["models"][model_key]
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
@@ -65,7 +64,7 @@ def main():
                 try:
                     text = call_api(args.provider, args.model, item["prompt"], args.temperature)
                 except RuntimeError as e:
-                    print(f"  SKIPPING {item[\'id\']} sample {sample_idx}: {e}")
+                    print(f"  SKIPPING {item['id']} sample {sample_idx}: {e}")
                     n_failed += 1
                     time.sleep(3)
                     continue
@@ -79,7 +78,7 @@ def main():
                 f.flush()
                 n_ok += 1
                 print(f"[{args.provider}/{args.model} T={args.temperature}] "
-                      f"{item[\'id\']} sample {sample_idx} done ({len(text)} chars)")
+                      f"{item['id']} sample {sample_idx} done ({len(text)} chars)")
                 time.sleep(1.2)
 
     print(f"\nDone: {n_ok} succeeded, {n_failed} skipped after retries.")
