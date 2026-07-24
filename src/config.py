@@ -76,14 +76,12 @@ API_PROVIDERS = {
             "falcon-7b": "tiiuae/falcon-7b-instruct",
         },
     },
-    "openrouter": {
-        "base_url": "https://openrouter.ai/api/v1/chat/completions",
-        "env_key": "OPENROUTER_API_KEY",
+    "huggingface": {
+        "base_url": "https://router.huggingface.co/v1/chat/completions",
+        "env_key": "HF_TOKEN",
         "models": {
-            "llama3-8b": "meta-llama/llama-3-8b-instruct",
-            "llama3-70b": "meta-llama/llama-3-70b-instruct",
-            "mistral-7b": "mistralai/mistral-7b-instruct",
-            "falcon-7b": "tiiuae/falcon-7b-instruct",
+            "mistral-7b": "mistralai/Mistral-7B-Instruct-v0.3:fastest",
         },
+   
     },
 }
