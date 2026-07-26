@@ -31,10 +31,10 @@ def call_api(provider, model_key, prompt, temperature, max_tokens=400, max_retri
         try:
             resp = requests.post(cfg["base_url"], headers=headers, json=payload, timeout=60)
             if resp.status_code == 429:
-                wait = min(30, 2 ** attempt)
+                wait = min(60, 5 * (attempt + 1))
                 print(f"  rate limited, retrying in {wait}s (attempt {attempt + 1}/{max_retries})...")
                 time.sleep(wait)
-                last_err = f"429 rate limited (last attempt {attempt + 1})"
+                last_err = "429 rate limited"
                 continue
             resp.raise_for_status()
             data = resp.json()
@@ -45,6 +45,19 @@ def call_api(provider, model_key, prompt, temperature, max_tokens=400, max_retri
     raise RuntimeError(f"API call failed after {max_retries} retries: {last_err}")
 
 
+def load_completed_keys(out_path):
+    completed = set()
+    if not os.path.exists(out_path):
+        return completed
+    with open(out_path, encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            completed.add((r["item_id"], r["model"], r["temperature"], r["sample_idx"]))
+    return completed
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--provider", required=True, choices=list(API_PROVIDERS))
@@ -52,15 +65,25 @@ def main():
     parser.add_argument("--temperature", type=float, required=True)
     parser.add_argument("--out", default="data/raw_generations.jsonl")
     parser.add_argument("--n_samples", type=int, default=1)
+    parser.add_argument("--sleep_between", type=float, default=1.2,
+                         help="Seconds to wait between successful calls (raise this for models "
+                              "with stricter per-minute limits, e.g. llama3-70b).")
     args = parser.parse_args()
 
     dataset = load_dataset()
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
 
+    completed = load_completed_keys(args.out)
+    if completed:
+        print(f"  Resume mode: {len(completed)} combos already done, skipping those.")
+
     n_ok, n_failed = 0, 0
     with open(args.out, "a", encoding="utf-8") as f:
         for item in dataset:
             for sample_idx in range(args.n_samples):
+                key = (item["id"], args.model, args.temperature, sample_idx)
+                if key in completed:
+                    continue
                 try:
                     text = call_api(args.provider, args.model, item["prompt"], args.temperature)
                 except RuntimeError as e:
@@ -79,11 +102,11 @@ def main():
                 n_ok += 1
                 print(f"[{args.provider}/{args.model} T={args.temperature}] "
                       f"{item['id']} sample {sample_idx} done ({len(text)} chars)")
-                time.sleep(1.2)
+                time.sleep(args.sleep_between)
 
     print(f"\nDone: {n_ok} succeeded, {n_failed} skipped after retries.")
     if n_failed > 0:
-        print("Re-run the same command to top up skipped items.")
+        print("Re-run the same command to top up skipped items (resume mode will skip completed ones).")
 
 
 if __name__ == "__main__":
